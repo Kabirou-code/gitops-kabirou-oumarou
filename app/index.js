@@ -9,7 +9,7 @@ app.get('/', (req, res) => {
       <body style="font-family: Arial; text-align: center; margin-top: 100px;">
         <h1>Kabirou Oumarou</h1>
         <p>M1 SSI - ESMT Dakar - Projet GitOps observable sur Kubernetes</p>
-        <p>Version: 1.0.0</p>
+        <p>Version: 1.0.1</p>
       </body>
     </html>
   `);
