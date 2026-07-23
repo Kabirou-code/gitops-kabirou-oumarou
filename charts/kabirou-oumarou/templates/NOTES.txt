@@ -1,0 +1,8 @@
+Application {{ .Values.nameOverride }} déployée avec succès.
+
+Pour accéder à l'application depuis le cluster :
+  kubectl port-forward svc/{{ .Values.fullnameOverride }} 8080:{{ .Values.service.port }}
+  Puis ouvre http://localhost:8080
+
+Vérifie les pods :
+  kubectl get pods -l app={{ .Values.nameOverride }}
