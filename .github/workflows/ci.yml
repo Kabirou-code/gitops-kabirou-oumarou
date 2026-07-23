@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+
+jobs:
+  build-scan-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint Helm chart
+        run: helm lint charts/kabirou-oumarou
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.GHCR_REGISTRY }}/kabirou-oumarou:${{ github.sha }} ./app
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.GHCR_REGISTRY }}/kabirou-oumarou:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: 0
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USER }} --password-stdin
+
+      - name: Push image
+        run: docker push ${{ secrets.GHCR_REGISTRY }}/kabirou-oumarou:${{ github.sha }}
+
+      - name: Bump image tag in values.yaml
+        run: |
+          sed -i "s/tag: .*/tag: \"${{ github.sha }}\"/" charts/kabirou-oumarou/values.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add charts/kabirou-oumarou/values.yaml
+          git commit -m "ci: bump image tag to ${{ github.sha }}" || echo "no changes to commit"
+          git push
